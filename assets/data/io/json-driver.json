@@ -1,0 +1,169 @@
+[
+  {
+    "name": "desktop",
+    "icon": "folder",
+    "security": {
+      "readOnly": true
+    },
+    "content": [
+      {
+        "name": "My portfolio",
+        "icon": "folder-hearth",
+        "security": {
+          "readOnly": true
+        },
+        "content": [
+          {
+            "name": "Tumblr (Complete portfolio).href",
+            "icon": "brand-tumblr",
+            "content": {
+              "href": "https://lrasente.tumblr.com",
+              "target": "_system"
+            },
+            "security": {
+              "readOnly": true
+            }
+          },
+          {
+            "name": "github.href",
+            "icon": "brand-github",
+            "content": {
+              "href": "https://www.github.com/lcnvdl",
+              "target": "_system"
+            },
+            "security": {
+              "readOnly": true
+            }
+          },
+          {
+            "name": "Blogger (Spanish).href",
+            "icon": "brand-blogger",
+            "content": {
+              "href": "https://programando-soft.blogspot.com",
+              "target": "_system"
+            },
+            "security": {
+              "readOnly": true
+            }
+          }
+        ]
+      },
+      {
+        "name": "My apps",
+        "icon": "folder-hearth",
+        "security": {
+          "readOnly": true
+        },
+        "content": [
+          {
+            "name": "My apps.href",
+            "icon": "brand-google-play",
+            "content": {
+              "href": "https://play.google.com/store/apps/developer?id=Forja+Games",
+              "target": "_system"
+            },
+            "security": {
+              "readOnly": true
+            }
+          },
+          {
+            "name": "My apps (Baumsoft).href",
+            "icon": "brand-google-play",
+            "content": {
+              "href": "https://play.google.com/store/apps/developer?id=Baumsoft",
+              "target": "_system"
+            },
+            "security": {
+              "readOnly": true
+            }
+          },
+          {
+            "name": "Launch Perfect Portfolio.iframe",
+            "icon": "brand-android",
+            "content": {
+              "src": "https://appetize.io/embed/8rage73qym5x54e69xgfxt0tp4?device=nexus5&scale=75&orientation=portrait&osVersion=8.1&deviceColor=white",
+              "title": "Perfect Portfolio"
+            },
+            "security": {
+              "readOnly": true
+            }
+          },
+          {
+            "name": "Windows apps (Gumroad).href",
+            "icon": "brand-gumroad",
+            "content": {
+              "href": "https://gumroad.com/lcnvdl",
+              "target": "_system"
+            },
+            "security": {
+              "readOnly": true
+            }
+          }
+        ]
+      },
+      {
+        "name": "Playground",
+        "icon": "folder-fire",
+        "security": {
+          "readOnly": true
+        },
+        "content": [
+          {
+            "name": "text file example.txt",
+            "icon": "file-txt",
+            "content": "You are currently reading a text file.",
+            "security": {
+              "readOnly": true
+            }
+          },
+          {
+            "name": "markdown file example.md",
+            "icon": "file-txt",
+            "content": "# You are reading a Markdown file\n## This is a subtitle\n- Item a\n- Item b\n- Item c\n",
+            "security": {
+              "readOnly": true
+            }
+          }
+        ]
+      },
+      {
+        "name": "paint.iframe",
+        "icon": "https://jspaint.app/images/icons/apple-icon-180x180.png",
+        "content": {
+          "src": "https://jspaint.app/",
+          "title": "JS Paint"
+        },
+        "security": {
+          "readOnly": true
+        }
+      },
+      {
+        "name": "calculator.lnk",
+        "icon": "calculator",
+        "content": "app://calc",
+        "security": {
+          "readOnly": true
+        }
+      },
+      {
+        "name": "notepad.iframe",
+        "icon": "notepad",
+        "content": {
+          "src": "https://www.editpad.org/",
+          "title": "EditPad"
+        },
+        "security": {
+          "readOnly": true
+        }
+      },
+      {
+        "name": "explorer.lnk",
+        "icon": "folder",
+        "content": "app://explorer",
+        "security": {
+          "readOnly": true
+        }
+      }
+    ]
+  }
+]

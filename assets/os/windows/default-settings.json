@@ -1,0 +1,22 @@
+{
+  "animations": {
+    "open": [
+      "jackInTheBox",
+      "bounceIn"
+    ],
+    "close": [
+      "zoomOut"
+    ],
+    "restoreFromMaximized": [
+    ],
+    "restoreFromMinimized": [
+    ],
+    "minimize": [
+      "backOutDown",
+      "zoomOutDown"
+    ],
+    "maximize": [
+      "fadeOutUp"
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "root": "",
+  "structure": {
+    "users": {
+      "security": {
+        "authentication": true
+      }
+    },
+    "protected": {
+      "security": {
+        "readOnly": true,
+        "authentication": true
+      }
+    },
+    "shared": {
+      "security": {
+        "readOnly": true
+      }
+    }
+  }
+}
