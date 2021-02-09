@@ -123,6 +123,14 @@
             "security": {
               "readOnly": true
             }
+          },
+          {
+            "name": "about.md",
+            "icon": "file-txt",
+            "link-content": "/assets/files/about.md",
+            "security": {
+              "readOnly": true
+            }
           }
         ]
       },
@@ -163,6 +171,41 @@
         "security": {
           "readOnly": true
         }
+      }
+    ]
+  },
+  {
+    "name": "system",
+    "icon": "folder",
+    "security": {
+      "readOnly": true
+    },
+    "content": [
+      {
+        "name": "$events",
+        "icon": "folder",
+        "security": {
+          "readOnly": true
+        },
+        "content": [
+          {
+            "name": "mount",
+            "icon": "folder",
+            "security": {
+              "readOnly": true
+            },
+            "content": [
+              {
+                "name": "about.lnk",
+                "icon": "file",
+                "content": "app://viewer,/desktop/Playground/about.md",
+                "security": {
+                  "readOnly": true
+                }
+              }
+            ]
+          }
+        ]
       }
     ]
   }

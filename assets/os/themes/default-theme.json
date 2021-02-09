@@ -1,5 +1,8 @@
 {
-  "wallpaper": "/assets/os/wallpapers/wp-1.jpg",
+  "wallpaper": {
+    "hd": "/assets/os/wallpapers/wp-1.jpg",
+    "ld": "/assets/os/wallpapers/wp-1_ld.jpg"
+  },
   "mainToolBar": {
     "opacity": "0.5"
   }

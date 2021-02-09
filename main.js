@@ -23,7 +23,13 @@ class LnkLauncher {
     launch(file, path, settings) {
         return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, function* () {
             const local = new _local_app_launcher__WEBPACK_IMPORTED_MODULE_1__["LocalAppLauncher"](this.windowsMgr, this.dynamicAppLoader);
-            const content = (path && path.startsWith("app://")) ? path : yield this.vfs.readTextFile(path);
+            let content = (path && path.startsWith("app://")) ? path : yield this.vfs.readTextFile(path);
+            if (content.startsWith("app://") && content.includes(",")) {
+                const spl = content.split(",");
+                content = spl.shift().trim();
+                settings = settings || {};
+                settings.args = spl.map(m => m.trim());
+            }
             return yield local.launch(file, content, settings);
         });
     }
@@ -495,7 +501,7 @@ class MarkdownViewComponent {
     }
     set content(v) {
         this.rawContent = v;
-        this.htmlContent = window.marked(v);
+        this.htmlContent = window.marked(v) + "<br>";
     }
 }
 MarkdownViewComponent.ɵfac = function MarkdownViewComponent_Factory(t) { return new (t || MarkdownViewComponent)(_angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵdirectiveInject"](src_app_services_ux_theme_service__WEBPACK_IMPORTED_MODULE_1__["ThemeService"])); };
@@ -2351,8 +2357,26 @@ class ExampleDriver {
             do {
                 const currentPath = split.shift();
                 current = current.content.find(m => m.name === currentPath);
-            } while (split.length && this.isFolder(current));
+            } while (split.length && current && this.isFolder(current));
             if (current && !this.isFolder(current)) {
+                if (current["link-content"]) {
+                    const finalUrl = current["link-content"];
+                    const req = {
+                        method: "GET",
+                        cache: "no-cache",
+                        headers: {
+                            "Content-Type": "text/plain",
+                        },
+                    };
+                    const response = yield fetch(finalUrl, req);
+                    if (response.ok) {
+                        const responseData = yield response.text();
+                        return responseData;
+                    }
+                    else {
+                        throw new Error(response.statusText);
+                    }
+                }
                 if (typeof current.content === "object") {
                     return JSON.stringify(current.content);
                 }
@@ -2409,8 +2433,39 @@ class ExampleDriver {
     }
     exists(path) {
         return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, function* () {
-            /** @todo Implement this method */
-            throw new Error("Method not implemented");
+            yield src_app_helpers_async_helper__WEBPACK_IMPORTED_MODULE_1__["AsyncHelper"].waitFor(() => this.driveContent);
+            if (!path) {
+                return false;
+            }
+            if (path.length === 2 && path[1] === ":") {
+                return true;
+            }
+            if (path.indexOf(":") === 1) {
+                path = path.substr(2);
+            }
+            const parts = path.split("/").slice(1);
+            let currentDirFiles = null;
+            if (parts.length === 0) {
+                return false;
+            }
+            for (const part of parts) {
+                let node;
+                if (!currentDirFiles) {
+                    node = this.driveContent.find(m => m.name === part);
+                }
+                else {
+                    node = currentDirFiles.find(m => m.name === part);
+                }
+                if (!node) {
+                    return false;
+                }
+                let files = node.content;
+                files = JSON.parse(JSON.stringify(files));
+                files.forEach(m => m.path = src_app_helpers_path_helper__WEBPACK_IMPORTED_MODULE_2__["PathHelper"].join(path, m.name));
+                currentDirFiles = files;
+            }
+            /** @todo Esto no está andando bien, fue copy paste de list, pensar bien y hacer */
+            return true;
         });
     }
     rmdir(path) {
@@ -2613,7 +2668,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var src_app_drivers_io_ajax_storage_driver__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! src/app/drivers/io/ajax-storage-driver */ "dHhK");
 /* harmony import */ var src_app_drivers_io_example_driver__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! src/app/drivers/io/example-driver */ "CJ7x");
 /* harmony import */ var src_app_drivers_io_firebase_storage_driver__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! src/app/drivers/io/firebase-storage-driver */ "kcQL");
-/* harmony import */ var _drives_drive__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./drives/drive */ "WyMe");
+/* harmony import */ var _process_shell_service__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../process/shell.service */ "9G8U");
+/* harmony import */ var _drives_drive__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./drives/drive */ "WyMe");
+
 
 
 
@@ -2641,10 +2698,28 @@ class VfmService {
             this.addDrive(new src_app_drivers_io_firebase_storage_driver__WEBPACK_IMPORTED_MODULE_4__["FirebaseStorageDriver"](), "/assets/data/io/firebase-driver.json");
             this.addDrive(new src_app_drivers_io_ajax_storage_driver__WEBPACK_IMPORTED_MODULE_2__["AjaxStorageDriver"](), "/assets/data/io/ajax-driver.json");
             yield VfmService.drives[0].mount("C:", this.injector);
+            this.callMountEvents(VfmService.drives[0]);
         });
     }
     mount(unit) {
-        return this.getDrive(unit).mount(unit, this.injector);
+        return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, function* () {
+            const drive = this.getDrive(unit);
+            yield drive.mount(unit, this.injector);
+            this.callMountEvents(drive);
+        });
+    }
+    callMountEvents(drive) {
+        return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, function* () {
+            const existsEventsFolder = yield this.getDriver(drive.unit).exists("/system/$events/mount");
+            if (!existsEventsFolder) {
+                return;
+            }
+            const files = yield this.getDriver(drive.unit).list("/system/$events/mount");
+            for (const file of files) {
+                console.log("Startup: starting", file);
+                yield this.injector.get(_process_shell_service__WEBPACK_IMPORTED_MODULE_5__["ShellService"]).launch(file);
+            }
+        });
     }
     exists(path) {
         const driver = this.getDriver(this.extractUnit(path));
@@ -2675,7 +2750,7 @@ class VfmService {
     }
     addDrive(driver, settings) {
         const unit = this.nextFreeUnit;
-        const drive = new _drives_drive__WEBPACK_IMPORTED_MODULE_5__["Drive"](settings, {
+        const drive = new _drives_drive__WEBPACK_IMPORTED_MODULE_6__["Drive"](settings, {
             unit,
             driver,
             name: driver.getDriveType()
@@ -4261,10 +4336,14 @@ __webpack_require__.r(__webpack_exports__);
 
 
 function WallpaperComponent_div_0_Template(rf, ctx) { if (rf & 1) {
-    _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵelement"](0, "div", 1);
+    _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵelementStart"](0, "div", 1);
+    _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵelement"](1, "img", 2);
+    _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵelementEnd"]();
 } if (rf & 2) {
     const ctx_r0 = _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵnextContext"]();
-    _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵstyleMapInterpolate1"]("background-image: url(", ctx_r0.wallpaperUrl, ");");
+    _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵstyleMapInterpolate1"]("background-image: ", ctx_r0.wallpaperString, ";");
+    _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵadvance"](1);
+    _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵproperty"]("src", ctx_r0.preload, _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵsanitizeUrl"]);
 } }
 class WallpaperComponent {
     constructor(theme) {
@@ -4272,15 +4351,22 @@ class WallpaperComponent {
     }
     ngOnInit() {
     }
-    get wallpaperUrl() {
+    get wallpaper() {
         return this.theme.wallpaper;
+    }
+    get preload() {
+        return this.wallpaper.ld || this.wallpaper.hd;
+    }
+    get wallpaperString() {
+        const wp = [this.wallpaper.hd, this.wallpaper.ld].filter(m => m && m !== "").map(m => `url(${m})`);
+        return wp.join(",");
     }
 }
 WallpaperComponent.ɵfac = function WallpaperComponent_Factory(t) { return new (t || WallpaperComponent)(_angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵdirectiveInject"](src_app_services_ux_theme_service__WEBPACK_IMPORTED_MODULE_1__["ThemeService"])); };
-WallpaperComponent.ɵcmp = _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵdefineComponent"]({ type: WallpaperComponent, selectors: [["app-wallpaper"]], decls: 1, vars: 1, consts: [["class", "layer wallpaper-layer wallpaper", 3, "style", 4, "ngIf"], [1, "layer", "wallpaper-layer", "wallpaper"]], template: function WallpaperComponent_Template(rf, ctx) { if (rf & 1) {
-        _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵtemplate"](0, WallpaperComponent_div_0_Template, 1, 3, "div", 0);
+WallpaperComponent.ɵcmp = _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵdefineComponent"]({ type: WallpaperComponent, selectors: [["app-wallpaper"]], decls: 1, vars: 1, consts: [["class", "layer wallpaper-layer wallpaper", 3, "style", 4, "ngIf"], [1, "layer", "wallpaper-layer", "wallpaper"], [2, "display", "none", 3, "src"]], template: function WallpaperComponent_Template(rf, ctx) { if (rf & 1) {
+        _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵtemplate"](0, WallpaperComponent_div_0_Template, 2, 4, "div", 0);
     } if (rf & 2) {
-        _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵproperty"]("ngIf", ctx.wallpaperUrl);
+        _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵproperty"]("ngIf", ctx.wallpaper);
     } }, directives: [_angular_common__WEBPACK_IMPORTED_MODULE_2__["NgIf"]], styles: [".wallpaper[_ngcontent-%COMP%] {\n  position: fixed;\n  top: 0;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  background-size: cover;\n  z-index: 0;\n}\n/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInNyYy9hcHAvY29tcG9uZW50cy9kZXNrdG9wL3dhbGxwYXBlci93YWxscGFwZXIuY29tcG9uZW50LnNjc3MiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUE7RUFDRSxlQUFBO0VBQ0EsTUFBQTtFQUNBLFNBQUE7RUFDQSxPQUFBO0VBQ0EsUUFBQTtFQUNBLHNCQUFBO0VBQ0EsVUFBQTtBQUNGIiwiZmlsZSI6InNyYy9hcHAvY29tcG9uZW50cy9kZXNrdG9wL3dhbGxwYXBlci93YWxscGFwZXIuY29tcG9uZW50LnNjc3MiLCJzb3VyY2VzQ29udGVudCI6WyIud2FsbHBhcGVyIHtcclxuICBwb3NpdGlvbjogZml4ZWQ7XHJcbiAgdG9wOiAwO1xyXG4gIGJvdHRvbTogMDtcclxuICBsZWZ0OiAwO1xyXG4gIHJpZ2h0OiAwO1xyXG4gIGJhY2tncm91bmQtc2l6ZTogY292ZXI7XHJcbiAgei1pbmRleDogMDtcclxufVxyXG4iXX0= */"] });
 /*@__PURE__*/ (function () { _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵsetClassMetadata"](WallpaperComponent, [{
         type: _angular_core__WEBPACK_IMPORTED_MODULE_0__["Component"],
@@ -4411,7 +4497,7 @@ class AjaxStorageDriver {
     get(url) {
         return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, function* () {
             const finalUrl = this.parseUrl(url);
-            let req = {
+            const req = {
                 method: "GET",
                 mode: "cors",
                 cache: "no-cache",
@@ -4430,7 +4516,7 @@ class AjaxStorageDriver {
     post(url, data) {
         return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, function* () {
             const finalUrl = this.parseUrl(url);
-            let req = {
+            const req = {
                 body: JSON.stringify(data),
                 method: "POST",
                 mode: "cors",
@@ -6169,6 +6255,9 @@ class AppComponent extends src_app_base_application_base__WEBPACK_IMPORTED_MODUL
                 path = args[i];
             }
         }
+        if (data.cwd && (data.cwd.startsWith("http://") || data.cwd.startsWith("https://"))) {
+            this.download = true;
+        }
         if (!this.download && data.cwd) {
             path = src_app_helpers_path_helper__WEBPACK_IMPORTED_MODULE_3__["PathHelper"].join(data.cwd, path);
         }
@@ -6298,12 +6387,12 @@ const routes = [{
 class AppRoutingModule {
 }
 AppRoutingModule.ɵmod = _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵdefineNgModule"]({ type: AppRoutingModule });
-AppRoutingModule.ɵinj = _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵdefineInjector"]({ factory: function AppRoutingModule_Factory(t) { return new (t || AppRoutingModule)(); }, imports: [[_angular_router__WEBPACK_IMPORTED_MODULE_1__["RouterModule"].forRoot(routes)], _angular_router__WEBPACK_IMPORTED_MODULE_1__["RouterModule"]] });
+AppRoutingModule.ɵinj = _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵdefineInjector"]({ factory: function AppRoutingModule_Factory(t) { return new (t || AppRoutingModule)(); }, imports: [[_angular_router__WEBPACK_IMPORTED_MODULE_1__["RouterModule"].forRoot(routes, { useHash: true })], _angular_router__WEBPACK_IMPORTED_MODULE_1__["RouterModule"]] });
 (function () { (typeof ngJitMode === "undefined" || ngJitMode) && _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵsetNgModuleScope"](AppRoutingModule, { imports: [_angular_router__WEBPACK_IMPORTED_MODULE_1__["RouterModule"]], exports: [_angular_router__WEBPACK_IMPORTED_MODULE_1__["RouterModule"]] }); })();
 /*@__PURE__*/ (function () { _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵsetClassMetadata"](AppRoutingModule, [{
         type: _angular_core__WEBPACK_IMPORTED_MODULE_0__["NgModule"],
         args: [{
-                imports: [_angular_router__WEBPACK_IMPORTED_MODULE_1__["RouterModule"].forRoot(routes)],
+                imports: [_angular_router__WEBPACK_IMPORTED_MODULE_1__["RouterModule"].forRoot(routes, { useHash: true })],
                 exports: [_angular_router__WEBPACK_IMPORTED_MODULE_1__["RouterModule"]]
             }]
     }], null, null); })();
