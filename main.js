@@ -2332,7 +2332,7 @@ class ExampleDriver {
     }
     mount(unit, settings) {
         return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, function* () {
-            const response = yield fetch(settings);
+            const response = yield fetch(settings, { cache: "no-cache" });
             this.driveContent = yield response.json();
             // console.log(this.driveContent);
         });

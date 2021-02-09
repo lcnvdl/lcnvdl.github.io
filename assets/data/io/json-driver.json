@@ -158,7 +158,7 @@
         "icon": "notepad",
         "content": {
           "src": "https://www.calmlywriter.com/online/",
-          "title": "EditPad"
+          "title": "Calmly Writer"
         },
         "security": {
           "readOnly": true
