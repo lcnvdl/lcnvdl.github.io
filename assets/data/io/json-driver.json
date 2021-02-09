@@ -157,7 +157,7 @@
         "name": "notepad.iframe",
         "icon": "notepad",
         "content": {
-          "src": "https://www.editpad.org/",
+          "src": "https://www.calmlywriter.com/online/",
           "title": "EditPad"
         },
         "security": {
